@@ -1,0 +1,53 @@
+#!/bin/sh  
+
+path="/etc/pppoe_plus"
+tmpip="tmpip"
+ok=0
+upd=1
+check=2
+off=3
+err=4
+
+
+testhost="www.baidu.com"
+
+timeout=3
+
+sleep_time=5
+
+if [ ! -d ${path} ];then
+    mkdir -p ${path}
+    touch ${path}/${tmpip}
+fi
+
+oldip="`cat ${path}/${tmpip}`"
+
+currip=''
+
+online=1
+
+currip="`ifconfig | grep pppoe -A 3 | grep inet |awk '{ print $2 }' | awk -F\: '{ print $2 }'`"
+
+if [ "$currip" == "" ];then
+    echo "" > ${path}/${tmpip}
+    echo -n $err
+    exit 1
+
+elif [ "$currip" != "$oldip" ];then
+   echo $currip > ${path}/${tmpip}
+   echo -n $currip
+   exit 0
+fi 
+    
+`ping ${testhost} -W ${timeout} -c 1 > /dev/null 2>&1` 
+
+if [ $? -eq 0 ]; then
+    echo -n $ok
+    exit 0
+
+elif [ $online -eq 1 ]; then
+    echo -n $off
+    #flash pppoe
+    exit 1
+
+fi
